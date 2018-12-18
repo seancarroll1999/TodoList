@@ -18,33 +18,24 @@ public class Main {
 	public int no = 58;
 	
 	public static ArrayList<Todo> todoList = new ArrayList<Todo>();
+	public static ArrayList<Todo> historyList = new ArrayList<Todo>();
 	
 	public static void main(String args[]) throws IOException {
 		Main val = new Main();
-//		Todo trialTodo  = new Todo(1, "new mini paragraph");
-//		todoList.add(trialTodo);
-//		Todo trialTodo1  = new Todo(2, "new msdini paragraph");
-//		todoList.add(trialTodo1);
-		//writeTodo();
 		val.readTodo();
-		//String s = val.getText();
-		//System.out.println(s);
 		mainPage();
 	}
 	
 	
-	
+	//READING AND WRITING TODO LISTS FOR PERSISTANCE
 	
 	public static void writeTodo() throws FileNotFoundException, UnsupportedEncodingException {
 		
 		PrintWriter writer = new PrintWriter("/home/sean/Todo.txt", "UTF-8");
-		
 		String content = "";
-		
 		for(int i = 0; i < todoList.size(); i++) {
 			content = content + todoList.get(i).getPriority() + "~" + todoList.get(i).getDescription() + "`";
 		}
-
 		writer.println(content);
 		writer.close();
 	}
@@ -59,7 +50,7 @@ public class Main {
 		 is.close();
 		 
 		 if(!content.equals("")) {
-		String[] fullTodos = content.split("`");
+		 String[] fullTodos = content.split("`");
 		
 		for(int i = 0; i < fullTodos.length; i++) {
 			String[] split = fullTodos[i].split("~");
@@ -71,13 +62,15 @@ public class Main {
 		 }
 	}
 	
+	
+	// PAGES OF THE PROGRAM
 	public static void mainPage() throws FileNotFoundException, UnsupportedEncodingException {
-		clear();
-		printTitle();
-		printInstructions();
-		printQuestions();
-		blank();
-		printInput();
+		UI.clear();
+		UI.printTitle();
+		UI.printInstructions();
+		printQuestions(todoList);
+		UI.blank();
+		UI.printInput();
 		Scanner newScan = new Scanner(System.in);
 		String input = newScan.nextLine();
 		int choice = -1;
@@ -102,23 +95,31 @@ public class Main {
 			}*/
 			if(input.equals("t") || input.equals("T")) {
 				System.out.println("Enter a number to Tick: ");
-				ArrayList<Todo> list = removeTodo();
+				Scanner scan = new Scanner(System.in);
+				int num = scan.nextInt();
+				Todo t = todoList.get(num - 1);
+				ArrayList<Todo> list = removeTodoItem(t.getPriority());
 				todoList = list;
+				completed(t);
+				historyList.add(t);
 				mainPage();
 			}
 			if(input.equals("q") || input.equals("Q")) {
 				writeTodo();
 				System.exit(0);
 			}
+			if(input.equals("h") || input.equals("H")) {
+				displayHistory();
+			}
 		}
 	}
 	
 	public static void addTodo() throws FileNotFoundException, UnsupportedEncodingException {
-		clear();
-		printTitle();
-		printAddInstructions();
-		blank();
-		printInput();
+		UI.clear();
+		UI.printTitle();
+		UI.printAddInstructions();
+		UI.blank();
+		UI.printInput();
 		System.out.println("Enter The Todo: ");
 		Scanner newScan = new Scanner(System.in);
 		String description = newScan.nextLine();
@@ -190,16 +191,16 @@ public class Main {
 	}*/
 	
 	public static void displayTodo(int pri) throws FileNotFoundException, UnsupportedEncodingException {
-		clear();
-		printTitle();
-		blank();
+		UI.clear();
+		UI.printTitle();
+		UI.blank();
 		System.out.println("Priority Number: " + todoList.get(pri -1).getPriority());
 		System.out.println("____________________");
-		blank();
-		blank();
+		UI.blank();
+		UI.blank();
 		System.out.println(todoList.get(pri - 1).getDescription());
-		blank();
-		blank();
+		UI.blank();
+		UI.blank();
 		Scanner scan = new Scanner(System.in);
 		String str = scan.nextLine();
 		
@@ -213,15 +214,65 @@ public class Main {
 			Todo t = todoList.get(pri - 1);
 			ArrayList<Todo> list = removeTodoItem(t.getPriority());
 			todoList = list;
+			completed(t);
+			historyList.add(t);
 			mainPage();
 		}
 	}
 	
 	
+	public static void displayHistory() {
+		UI.clear();
+		UI.printTitle();
+		UI.printInstructions();
+		printHistory(historyList);
+		UI.blank();
+		UI.printInput();
+		Scanner newScan = new Scanner(System.in);
+		String input = newScan.nextLine();
+		int choice = -1;
+		//DISPLAYING GOOD, NEED TO ADD USER OPTIONS, CLEAR FUNCTION TO REMOVE ALL HISTORY, CREATE PERSISTENCE FILE FOR LISTS
+	}
+	
+		
+	//FUNCTIONS OF THE PROGRAM
+	
+	public static void completed(Todo t) {
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+		LocalDateTime now = LocalDateTime.now();
+		String dateTime = dtf.format(now);
+		t.setCompletedDate(dateTime);
+	}
+	
+
+	public static void printHistory(ArrayList<Todo> t) {
+		if(t.size() != 0) {
+			UI.topH("01", t.get(0).getAbbr(), t.get(0).getCompletedDate());
+		for(int i = 1; i < t.size(); i++) {
+			if(i >= 9) {
+				UI.bottomH((Integer.toString(i + 1)) , t.get(i).getAbbr(), t.get(i).getCompletedDate());
+			}
+			else {
+				UI.bottomH(("0"+ (Integer.toString(i + 1))), t.get(i).getAbbr(), t.get(i).getCompletedDate());
+			}
+		}
+		}
+	}
 	
 	
-	
-	//if priority is higher then get the list of todos, increase all priority of the todo items by 1 from that priority and the insert the todo then sort the list. 
+	public static void printQuestions(ArrayList<Todo> t) {
+		if(t.size() != 0) {
+			UI.top(("0" + t.get(0).getPriority()), t.get(0).getAbbr());
+		for(int i = 1; i < t.size(); i++) {
+			if(i >= 9) {
+				UI.bottom((""+ t.get(i).getPriority()), t.get(i).getAbbr());
+			}
+			else {
+				UI.bottom(("0"+ t.get(i).getPriority()), t.get(i).getAbbr());
+			}
+		}
+		}
+	}
 	
 	public static ArrayList<Todo> addTodoList(ArrayList<Todo> startingList, Todo newTodo){
 		ArrayList<Todo> returnList = new ArrayList<Todo>();	
@@ -249,118 +300,26 @@ public class Main {
 	
 	public static ArrayList<Todo> removeTodoItem(int pri) {
 		ArrayList<Todo> returnTodo = new ArrayList<Todo>();
-		for(int i = 0; i < todoList.size(); i++) {
-			if(pri == todoList.get(i).getPriority()) {
-				i++;
-				while(true) {
-					Todo t = todoList.get(i);
-					t.setPriority(todoList.get(i).getPriority() - 1);		
-					returnTodo.add(t);
-					if(i == todoList.size() - 1) {
-						return  returnTodo;
-					}
+		
+			for(int i = 0; i < todoList.size(); i++) {
+				if(pri == todoList.get(i).getPriority()) {
 					i++;
+					while(true) {
+						if(returnTodo.size() == todoList.size() -1) {
+							return returnTodo;
+						}
+						Todo t = todoList.get(i);
+						t.setPriority(todoList.get(i).getPriority() -1);
+						returnTodo.add(t);
+						i++;
+					}
+					
+					
+				}else {
+					returnTodo.add(todoList.get(i));
 				}
 			}
-			else {
-				returnTodo.add(todoList.get(i));
-			}
-		}
-		return  returnTodo;
-	}
-	
-	
-	public static void completed(Todo t) {
-		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-		LocalDateTime now = LocalDateTime.now();
-		String dateTime = dtf.format(now);
-		t.setCompletedDate(dateTime);
-	}
-	
-	
-	
-	//PRINTINTG UI
-	
-	public static void printTitle() {
-		/*System.out.println(s + " _____          _         __ _     _   \r\n" + 
-				s +"/__   \\___   __| | ___   / /(_)___| |_ \r\n" + 
-				s + "  / /\\/ _ \\ / _  |/ _ \\ / / | / __| __|\r\n" + 
-				s + " / / | (_) | (_| | (_) / /__| \\__ \\ |_ \r\n" + 
-				s + " \\/   \\___/ \\__,_|\\___/\\____/_|___/\\__|\r\n" + 
-				"                                       ");*/
-		
-		System.out.println(s +" _____        ___        __ _     _   \r\n" + 
-				s +"/__   \\___   /   \\___   / /(_)___| |_ \r\n" + 
-				s +"  / /\\/ _ \\ / /\\ / _ \\ / / | / __| __|\r\n" + 
-				s +" / / | (_) / /_// (_) / /__| \\__ \\ |_ \r\n" + 
-				s +" \\/   \\___/___,' \\___/\\____/_|___/\\__|\r\n" + 
-				"                                      ");
-		System.out.println("//-------------------------------------------------------------");
-		System.out.println("//-------------------------------------------------------------");
-	}
-	
-	
-	
-	
-	public static void bottom(String num, String abb) {
-		System.out.println("  |        |                                               |");
-		System.out.println("  |   " + num + "   |  " + abb + "   |");
-		System.out.println("  |        |                                               |");
-		System.out.println("  ----------------------------------------------------------");
-	}
-	
-	public static void top(String num, String abb) {
-		System.out.println("  ----------------------------------------------------------");
-		System.out.println("  |        |                                               |");
-		System.out.println("  |   " + num + "   |  " + abb + "   |");
-		System.out.println("  |        |                                               |");
-		System.out.println("  ----------------------------------------------------------");
-	}
-	
-	
-	public static void printTop() {
-		System.out.println("  |                                                          |");
-	}
-	
-	
-	public static void printInstructions() {
-		System.out.println("     -----------------------------------------------------");
-		System.out.println("     |No for details - A to add - D to delete - E to edit|     ");
-		System.out.println("     -----------------------------------------------------");
-	}
-	
-	public static void printAddInstructions() {
-		System.out.println("     -----------------------------------------------------");
-		System.out.println("     |   Add a Todo by entering its Description first    |     ");
-		System.out.println("     |   add a priority to move it up or down the list   |     ");
-		System.out.println("     -----------------------------------------------------");
-	}
-	
-	public static void blank() {
-		System.out.println("");
-	}
-	
-	public static void printQuestions() {
-		if(todoList.size() != 0) {
-		top(("0" + todoList.get(0).getPriority()), todoList.get(0).getAbbr());
-		for(int i = 1; i < todoList.size(); i++) {
-			if(i >= 9) {
-				bottom((""+ todoList.get(i).getPriority()), todoList.get(i).getAbbr());
-			}
-			else {
-				bottom(("0"+ todoList.get(i).getPriority()), todoList.get(i).getAbbr());
-			}
-		}
-		}
-	}
-	
-	
-	
-	public static void clear() {
-		 System.out.print("\033[H\033[2J");
-	} 
-	public static void printInput() {
-		System.out.println("#################################################################");
+			return returnTodo;
 	}
 	
 	
